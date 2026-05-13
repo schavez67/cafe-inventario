@@ -14,7 +14,7 @@
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .accent-bar{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
     .logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.25rem}
-    .logo-svg{width:88px;height:88px;margin-bottom:.25rem;filter:drop-shadow(0 2px 8px rgba(0,112,74,.15))}
+    .logo-svg{width:88px;height:88px;margin-bottom:.25rem;filter:drop-shadow(0 2px 8px rgba(0,112,74,.15));object-fit:contain}
     .login-title{font-family:'Lora',serif;font-size:24px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:4px;text-align:center}
     .login-sub{font-size:14px;color:#5C8A70;font-weight:300;margin-bottom:1.25rem;text-align:center}
     .gold-divider{width:40px;height:2px;background:#CBA258;border-radius:2px;margin:0 auto 1.5rem}
@@ -30,11 +30,6 @@
     .btn-primary{width:100%;height:46px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:1.75rem}
     .btn-primary:hover{background:#1E3932}.btn-primary:active{transform:scale(.98)}.btn-primary:disabled{opacity:.7;cursor:not-allowed}
     .hint-text{font-size:12px;color:#5C8A70;text-align:center;line-height:1.6}
-    .demo-box{margin-top:1.5rem;border-top:0.5px solid #B7D4C0;padding-top:1.25rem}
-    .demo-title{font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
-    .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .demo-btn{height:36px;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;color:#1E3932;cursor:pointer;transition:all .15s;padding:0 8px}
-    .demo-btn:hover{background:#E8F4EE;border-color:#00704A}
     .modal-overlay{position:fixed;inset:0;background:rgba(30,57,50,.4);display:none;align-items:center;justify-content:center;z-index:100}
     .modal-overlay.open{display:flex}
     .modal-box{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:2rem;width:100%;max-width:380px;position:relative;margin:1rem;overflow:hidden}
@@ -52,23 +47,7 @@
   <div class="login-card">
     <div class="accent-bar"></div>
     <div class="logo-wrap">
-      <svg class="logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="100" r="98" fill="#00704A"/>
-        <circle cx="100" cy="100" r="88" fill="none" stroke="#ffffff" stroke-width="2.5"/>
-        <circle cx="100" cy="100" r="72" fill="#00704A"/>
-        <ellipse cx="100" cy="88" rx="26" ry="30" fill="#ffffff"/>
-        <ellipse cx="100" cy="82" rx="18" ry="20" fill="#00704A"/>
-        <path d="M76 72 Q80 60 88 66 Q94 54 100 62 Q106 54 112 66 Q120 60 124 72 Z" fill="#ffffff"/>
-        <path d="M74 108 Q65 122 72 132 Q80 140 100 136 Q120 140 128 132 Q135 122 126 108 Q113 120 100 118 Q87 120 74 108Z" fill="#ffffff"/>
-        <path id="topArc" d="M 30,100 A 70,70 0 0,1 170,100" fill="none"/>
-        <path id="botArc" d="M 35,110 A 70,70 0 0,0 165,110" fill="none"/>
-        <text font-family="Georgia,serif" font-size="13" fill="#ffffff" font-weight="bold" letter-spacing="3">
-          <textPath href="#topArc" startOffset="8%">STARBUCKS COFFEE</textPath>
-        </text>
-        <text font-family="Georgia,serif" font-size="11" fill="#ffffff" letter-spacing="2">
-          <textPath href="#botArc" startOffset="18%">✦ INVENTARIO ✦</textPath>
-        </text>
-      </svg>
+      <img class="logo-svg" src="https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-68416.png" alt="Starbucks" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><svg style="display:none;width:88px;height:88px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="98" fill="#00704A"/><circle cx="100" cy="100" r="88" fill="none" stroke="#fff" stroke-width="2.5"/><polygon points="100,48 104,60 116,60 107,68 110,80 100,73 90,80 93,68 84,60 96,60" fill="#fff"/><circle cx="100" cy="78" r="22" fill="#fff"/><circle cx="100" cy="74" r="15" fill="#00704A"/><path d="M68 110 Q60 128 68 140 Q80 152 100 148 Q120 152 132 140 Q140 128 132 110 Q116 124 100 122 Q84 124 68 110Z" fill="#fff"/><path d="M68 110 Q55 105 52 95 Q58 88 68 92" fill="#fff"/><path d="M132 110 Q145 105 148 95 Q142 88 132 92" fill="#fff"/><path id="t1" d="M 28,100 A 72,72 0 0,1 172,100" fill="none"/><path id="t2" d="M 33,112 A 72,72 0 0,0 167,112" fill="none"/><text font-family="Georgia,serif" font-size="12" fill="#fff" font-weight="bold" letter-spacing="3.5"><textPath href="#t1" startOffset="7%">STARBUCKS COFFEE</textPath></text><text font-family="Georgia,serif" font-size="10" fill="#fff" letter-spacing="2"><textPath href="#t2" startOffset="20%">✦ INVENTARIO ✦</textPath></text></svg>
     </div>
     <p class="login-title">Bienvenido de vuelta</p>
     <p class="login-sub">Ingresa tus credenciales para continuar</p>
@@ -87,15 +66,7 @@
     </div>
     <button class="btn-primary" id="btn-login">Iniciar sesión</button>
     <p class="hint-text">Si tienes problemas para acceder,<br>contacta a tu administrador de sistema.</p>
-    <div class="demo-box">
-      <p class="demo-title">Accesos rápidos de prueba</p>
-      <div class="demo-grid">
-        <button class="demo-btn" onclick="fillDemo('000001','admin123')">👑 Administrador</button>
-        <button class="demo-btn" onclick="fillDemo('000200','supervisor1')">🔑 Supervisor</button>
-        <button class="demo-btn" onclick="fillDemo('000101','barista1')">☕ Barista (Ana)</button>
-        <button class="demo-btn" onclick="fillDemo('000102','barista2')">☕ Barista (Luis)</button>
-      </div>
-    </div>
+  </div>
   </div>
 
   <div class="modal-overlay" id="modal">
