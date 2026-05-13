@@ -14,7 +14,7 @@
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .accent-bar{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
     .logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.25rem}
-    .logo-svg{width:88px;height:88px;margin-bottom:.25rem;filter:drop-shadow(0 2px 8px rgba(0,112,74,.15));object-fit:contain}
+    .logo-img{width:90px;height:90px;object-fit:contain;margin-bottom:.25rem;filter:drop-shadow(0 2px 8px rgba(0,112,74,.2))}
     .login-title{font-family:'Lora',serif;font-size:24px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:4px;text-align:center}
     .login-sub{font-size:14px;color:#5C8A70;font-weight:300;margin-bottom:1.25rem;text-align:center}
     .gold-divider{width:40px;height:2px;background:#CBA258;border-radius:2px;margin:0 auto 1.5rem}
@@ -39,6 +39,7 @@
     .modal-success{background:#DCFCE7;color:#166534;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:none}
     .modal-error{background:#FEF2F2;color:#991B1B;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:none}
     .btn-close{position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;font-size:20px;color:#5C8A70;line-height:1}
+    .btn-close:hover{color:#1E3932}
     .btn-secondary{width:100%;height:44px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
     .btn-secondary:hover{background:#1E3932}.btn-secondary:disabled{opacity:.7;cursor:not-allowed}
   </style>
@@ -47,7 +48,11 @@
   <div class="login-card">
     <div class="accent-bar"></div>
     <div class="logo-wrap">
-      <img class="logo-svg" src="https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-68416.png" alt="Starbucks" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><svg style="display:none;width:88px;height:88px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="98" fill="#00704A"/><circle cx="100" cy="100" r="88" fill="none" stroke="#fff" stroke-width="2.5"/><polygon points="100,48 104,60 116,60 107,68 110,80 100,73 90,80 93,68 84,60 96,60" fill="#fff"/><circle cx="100" cy="78" r="22" fill="#fff"/><circle cx="100" cy="74" r="15" fill="#00704A"/><path d="M68 110 Q60 128 68 140 Q80 152 100 148 Q120 152 132 140 Q140 128 132 110 Q116 124 100 122 Q84 124 68 110Z" fill="#fff"/><path d="M68 110 Q55 105 52 95 Q58 88 68 92" fill="#fff"/><path d="M132 110 Q145 105 148 95 Q142 88 132 92" fill="#fff"/><path id="t1" d="M 28,100 A 72,72 0 0,1 172,100" fill="none"/><path id="t2" d="M 33,112 A 72,72 0 0,0 167,112" fill="none"/><text font-family="Georgia,serif" font-size="12" fill="#fff" font-weight="bold" letter-spacing="3.5"><textPath href="#t1" startOffset="7%">STARBUCKS COFFEE</textPath></text><text font-family="Georgia,serif" font-size="10" fill="#fff" letter-spacing="2"><textPath href="#t2" startOffset="20%">✦ INVENTARIO ✦</textPath></text></svg>
+      <!-- Logo Starbucks oficial via jsDelivr CDN -->
+      <img class="logo-img"
+        src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@develop/icons/starbucks.svg"
+        alt="Starbucks"
+        onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9Ijk4IiBmaWxsPSIjMDA3MDRBIi8+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI4OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxlbGxpcHNlIGN4PSIxMDAiIGN5PSI4OCIgcng9IjI2IiByeT0iMzAiIGZpbGw9IiNmZmYiLz48ZWxsaXBzZSBjeD0iMTAwIiBjeT0iODIiIHJ4PSIxOCIgcnk9IjIwIiBmaWxsPSIjMDA3MDRBIi8+PHBhdGggZD0iTTc2IDcyIFE4MCA2MCA4OCA2NiBROTQgNTQgMTAwIDYyIFExMDYgNTQgMTEyIDY2IFExMjAgNjAgMTI0IDcyIFoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNNzQgMTA4IFE2NSAxMjIgNzIgMTMyIFE4MCAxNDAgMTAwIDEzNiBRMTIwIDE0MCAxMjggMTMyIFExMzUgMTIyIDEyNiAxMDggUTExMyAxMjAgMTAwIDExOCBRODcgMTIwIDc0IDEwOFoiIGZpbGw9IiNmZmYiLz48L3N2Zz4='"/>
     </div>
     <p class="login-title">Bienvenido de vuelta</p>
     <p class="login-sub">Ingresa tus credenciales para continuar</p>
@@ -66,7 +71,6 @@
     </div>
     <button class="btn-primary" id="btn-login">Iniciar sesión</button>
     <p class="hint-text">Si tienes problemas para acceder,<br>contacta a tu administrador de sistema.</p>
-  </div>
   </div>
 
   <div class="modal-overlay" id="modal">
@@ -88,40 +92,88 @@
   <script>
     const API='https://cafeinventario.andreachavez2313.workers.dev';
     emailjs.init('qk1KC3ulGtdGXjJ-I');
-    const PERMISOS={administrador:['productos','movimientos','reportes','usuarios'],supervisor:['productos','movimientos','reportes'],empleado:['movimientos']};
+
+    const PERMISOS={
+      administrador:['productos','movimientos','reportes','usuarios'],
+      supervisor:['productos','movimientos','reportes'],
+      empleado:['movimientos']
+    };
+
     function paginaInicio(rol){return rol==='empleado'?'movimientos.html':'productos.html';}
+
     const sesActiva=localStorage.getItem('sbx_sesion');
     if(sesActiva){const s=JSON.parse(sesActiva);window.location.href=paginaInicio(s.rol);}
-    function fillDemo(num,pwd){document.getElementById('emp-num').value=num;document.getElementById('password').value=pwd;}
-    const btnLogin=document.getElementById('btn-login'),empInput=document.getElementById('emp-num'),passInput=document.getElementById('password'),errMsg=document.getElementById('err-msg');
+
+    const btnLogin=document.getElementById('btn-login');
+    const empInput=document.getElementById('emp-num');
+    const passInput=document.getElementById('password');
+    const errMsg=document.getElementById('err-msg');
+
     function showError(msg){errMsg.textContent=msg;errMsg.style.display='block';}
     function hideError(){errMsg.style.display='none';}
+
     async function handleLogin(){
-      const emp=empInput.value.trim(),pass=passInput.value;
+      const emp=empInput.value.trim(), pass=passInput.value;
       hideError();
       if(!emp||!pass){showError('Por favor completa todos los campos.');return;}
-      btnLogin.textContent='Verificando...';btnLogin.disabled=true;
+      btnLogin.textContent='Verificando...';
+      btnLogin.disabled=true;
       try{
-        const res=await fetch(`${API}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero:emp,password:pass})});
+        const res=await fetch(`${API}/login`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({numero:emp,password:pass})
+        });
         const data=await res.json();
         if(res.ok&&data.ok){
-          localStorage.setItem('sbx_sesion',JSON.stringify({numero:emp,nombre:data.nombre,rol:data.rol,permisos:PERMISOS[data.rol]||[]}));
+          localStorage.setItem('sbx_sesion',JSON.stringify({
+            numero:emp,nombre:data.nombre,rol:data.rol,
+            permisos:PERMISOS[data.rol]||[]
+          }));
           window.location.href=paginaInicio(data.rol);
-        } else {showError('Número de empleado o contraseña incorrectos.');btnLogin.textContent='Iniciar sesión';btnLogin.disabled=false;}
-      } catch(e){showError('Error de conexión. Intenta de nuevo.');btnLogin.textContent='Iniciar sesión';btnLogin.disabled=false;}
+        } else {
+          showError('Número de empleado o contraseña incorrectos.');
+          btnLogin.textContent='Iniciar sesión';
+          btnLogin.disabled=false;
+        }
+      } catch(e){
+        showError('Error de conexión. Intenta de nuevo.');
+        btnLogin.textContent='Iniciar sesión';
+        btnLogin.disabled=false;
+      }
     }
+
     btnLogin.addEventListener('click',handleLogin);
     passInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
-    document.getElementById('open-modal').addEventListener('click',e=>{e.preventDefault();document.getElementById('modal').classList.add('open');document.getElementById('modal-success').style.display='none';document.getElementById('modal-error').style.display='none';document.getElementById('recovery-email').value='';});
-    document.getElementById('close-modal').addEventListener('click',()=>document.getElementById('modal').classList.remove('open'));
-    document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');});
+
+    document.getElementById('open-modal').addEventListener('click',e=>{
+      e.preventDefault();
+      document.getElementById('modal').classList.add('open');
+      document.getElementById('modal-success').style.display='none';
+      document.getElementById('modal-error').style.display='none';
+      document.getElementById('recovery-email').value='';
+    });
+    document.getElementById('close-modal').addEventListener('click',()=>{
+      document.getElementById('modal').classList.remove('open');
+    });
+    document.getElementById('modal').addEventListener('click',e=>{
+      if(e.target===document.getElementById('modal'))
+        document.getElementById('modal').classList.remove('open');
+    });
     document.getElementById('btn-send').addEventListener('click',()=>{
       const email=document.getElementById('recovery-email').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Ingresa un correo válido.');return;}
-      const btn=document.getElementById('btn-send');btn.textContent='Enviando...';btn.disabled=true;
+      const btn=document.getElementById('btn-send');
+      btn.textContent='Enviando...';btn.disabled=true;
       emailjs.send('service_0fivaie','template_lky622c',{to_email:email,link:API})
-      .then(()=>{document.getElementById('modal-success').style.display='block';document.getElementById('modal-error').style.display='none';})
-      .catch(()=>{document.getElementById('modal-error').style.display='block';document.getElementById('modal-success').style.display='none';})
+      .then(()=>{
+        document.getElementById('modal-success').style.display='block';
+        document.getElementById('modal-error').style.display='none';
+      })
+      .catch(()=>{
+        document.getElementById('modal-error').style.display='block';
+        document.getElementById('modal-success').style.display='none';
+      })
       .finally(()=>{btn.textContent='Enviar instrucciones';btn.disabled=false;});
     });
   </script>
