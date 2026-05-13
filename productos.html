@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Productos - Starbucks Inventario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:#F1F8F4;font-family:'DM Sans',sans-serif;color:#1E3932}
+
+    /* NAVBAR */
+    .navbar{background:#1E3932;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #CBA258;position:sticky;top:0;z-index:50;gap:1rem}
+    .nb{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nb img{width:34px;height:34px;object-fit:contain}
+    .nb span{font-family:'Lora',serif;font-size:16px;font-style:italic;color:#fff}
+    .nav-links{display:flex;align-items:center;gap:2px}
+    .nl{height:34px;padding:0 12px;border-radius:7px;background:transparent;border:none;font-size:13px;font-family:'DM Sans',sans-serif;color:#9DC4AF;cursor:pointer;text-decoration:none;display:flex;align-items:center;transition:all .15s;white-space:nowrap}
+    .nl:hover{background:rgba(255,255,255,.08);color:#fff}
+    .nl.on{background:rgba(255,255,255,.13);color:#fff;font-weight:500}
+    .nl.hidden{display:none}
+    .nr{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+    .nr-info{text-align:right}
+    .nr-name{font-size:13px;color:#fff;font-weight:500}
+    .nr-rol{font-size:11px;color:#9DC4AF}
+    .logout{height:30px;padding:0 12px;background:transparent;border:0.5px solid #5C8A70;border-radius:7px;color:#9DC4AF;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s}
+    .logout:hover{color:#fff;border-color:#9DC4AF}
+
+    /* ALERT STOCK BAJO */
+    .alert-bar{background:#FEF3C7;border-bottom:1px solid #FCD34D;padding:10px 1.5rem;font-size:13px;color:#92400E;display:none;align-items:center;gap:8px}
+    .alert-bar.show{display:flex}
+
+    /* LAYOUT */
+    .page{max-width:1120px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .ph{margin-bottom:1.75rem}
+    .pt{font-family:'Lora',serif;font-size:26px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:4px}
+    .ps{font-size:13px;color:#5C8A70;font-weight:300}
+    .gd{width:48px;height:2px;background:#CBA258;border-radius:2px;margin-top:10px}
+
+    /* STATS */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
+    .sc{background:#fff;border:0.5px solid #B7D4C0;border-radius:12px;padding:1rem 1.25rem}
+    .sl{font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+    .sv{font-family:'Lora',serif;font-size:28px;font-weight:600;color:#1E3932;line-height:1}
+    .sv.ok{color:#00704A} .sv.warn{color:#B45309} .sv.bad{color:#991B1B}
+
+    /* GRID */
+    .g2{display:grid;grid-template-columns:370px 1fr;gap:1.5rem;align-items:start}
+    @media(max-width:780px){.g2{grid-template-columns:1fr}}
+
+    /* CARD */
+    .card{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:1.75rem;position:relative;overflow:hidden}
+    .ca{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
+    .ct{font-family:'Lora',serif;font-size:17px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:1.25rem}
+
+    /* FORM */
+    .fg{margin-bottom:.9rem}
+    .fl{display:block;font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+    .fi,.fs{width:100%;height:43px;padding:0 12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;color:#1E3932;outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
+    .fi:focus,.fs:focus{border-color:#00704A;box-shadow:0 0 0 3px #D4EDE1}
+    .fi::placeholder{color:#9DC4AF}
+    .bwrap{position:relative}
+    .bwrap .fi{padding-right:44px}
+    .bscan{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:29px;height:29px;border-radius:6px;background:#1E3932;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:background .15s}
+    .bscan:hover{background:#00704A}
+    .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-p{width:100%;height:45px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;margin-top:.4rem}
+    .btn-p:hover{background:#1E3932} .btn-p:active{transform:scale(.98)}
+    .btn-s{width:100%;height:38px;background:#F1F8F4;color:#1E3932;border:0.5px solid #B7D4C0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;margin-top:6px;display:none}
+    .btn-s:hover{background:#E8F4EE}
+    .emsg{background:#FEF2F2;color:#991B1B;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:.9rem;display:none}
+    .omsg{background:#DCFCE7;color:#166534;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:.9rem;display:none}
+
+    /* TABLA */
+    .thead-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;gap:8px;flex-wrap:wrap}
+    .search{flex:1;min-width:140px;height:34px;padding:0 11px;font-size:13px;font-family:'DM Sans',sans-serif;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;color:#1E3932;outline:none;transition:border-color .15s}
+    .search:focus{border-color:#00704A}
+    .search::placeholder{color:#9DC4AF}
+    .frow{display:flex;gap:6px;flex-wrap:wrap}
+    .fb{height:30px;padding:0 12px;border-radius:20px;border:0.5px solid #B7D4C0;background:#F1F8F4;font-size:12px;font-family:'DM Sans',sans-serif;color:#5C8A70;cursor:pointer;transition:all .15s}
+    .fb.on{background:#1E3932;color:#fff;border-color:#1E3932}
+    .fb.warn-on{background:#B45309;color:#fff;border-color:#B45309}
+    .clr{height:30px;padding:0 12px;border-radius:20px;border:0.5px solid #FECACA;background:#FEF2F2;font-size:12px;font-family:'DM Sans',sans-serif;color:#991B1B;cursor:pointer}
+    .clr:hover{background:#FEE2E2}
+    .tw{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead tr{background:#F1F8F4;border-bottom:1px solid #B7D4C0}
+    th{padding:9px 11px;text-align:left;font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    td{padding:10px 11px;border-bottom:0.5px solid #E8F4EE;color:#1E3932}
+    tbody tr:hover{background:#F7FBF8}
+    tbody tr:last-child td{border-bottom:none}
+    .sbadge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+    .s-ok{background:#DCFCE7;color:#166534} .s-low{background:#FEF3C7;color:#92400E} .s-zero{background:#FEF2F2;color:#991B1B}
+    .ic{width:27px;height:27px;border-radius:6px;border:0.5px solid #B7D4C0;background:#F1F8F4;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;margin-right:3px}
+    .ic:hover{background:#E8F4EE;border-color:#00704A}
+    .ic.del:hover{background:#FEF2F2;border-color:#FECACA}
+    .empty{text-align:center;padding:3rem 1rem;color:#9DC4AF}
+    .empty-icon{font-size:34px;margin-bottom:8px}
+    .empty-text{font-size:14px;font-weight:300}
+
+    /* MODAL */
+    .ov{position:fixed;inset:0;background:rgba(30,57,50,.4);display:none;align-items:center;justify-content:center;z-index:100}
+    .ov.open{display:flex}
+    .mb{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:2rem;width:100%;max-width:430px;margin:1rem;position:relative;overflow:hidden}
+    .mba{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00704A,#1E3932 60%,#CBA258)}
+    .mt{font-family:'Lora',serif;font-size:18px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:1.1rem}
+    .xb{position:absolute;top:13px;right:15px;background:none;border:none;cursor:pointer;font-size:19px;color:#5C8A70}
+    .xb:hover{color:#1E3932}
+    .mac{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:.9rem}
+    .btn-sec{height:43px;background:#F1F8F4;color:#1E3932;border:0.5px solid #B7D4C0;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s}
+    .btn-sec:hover{background:#E8F4EE}
+
+    /* RF13 lock */
+    .locked{opacity:.4;pointer-events:none}
+  </style>
+</head>
+<body>
+
+<!-- RF10: alerta stock bajo -->
+<div class="alert-bar" id="alert-bar">
+  ⚠️ <strong>Alerta:</strong>&nbsp;<span id="alert-txt"></span>
+</div>
+
+<nav class="navbar">
+  <div class="nb">
+    <svg style="width:34px;height:34px;flex-shrink:0" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="98" fill="#00704A"/><circle cx="100" cy="100" r="88" fill="none" stroke="#ffffff" stroke-width="3"/><ellipse cx="100" cy="88" rx="26" ry="30" fill="#ffffff"/><ellipse cx="100" cy="82" rx="18" ry="20" fill="#00704A"/><path d="M76 72 Q80 60 88 66 Q94 54 100 62 Q106 54 112 66 Q120 60 124 72 Z" fill="#ffffff"/><path d="M74 108 Q65 122 72 132 Q80 140 100 136 Q120 140 128 132 Q135 122 126 108 Q113 120 100 118 Q87 120 74 108Z" fill="#ffffff"/></svg>
+    <span>Inventario Starbucks</span>
+  </div>
+  <div class="nav-links">
+    <a href="productos.html"   class="nl on" id="nav-prod">📦 Productos</a>
+    <a href="movimientos.html" class="nl"    id="nav-mov">↕ Movimientos</a>
+    <a href="reportes.html"    class="nl"    id="nav-rep">📊 Reportes</a>
+  </div>
+  <div class="nr">
+    <div class="nr-info">
+      <div class="nr-name" id="nav-nombre"></div>
+      <div class="nr-rol"  id="nav-rol"></div>
+    </div>
+    <button class="logout" onclick="logout()">Cerrar sesión</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="ph">
+    <p class="pt">Gestión de productos</p>
+    <p class="ps" id="page-sub"></p>
+    <div class="gd"></div>
+  </div>
+
+  <div class="stats">
+    <div class="sc"><div class="sl">Total productos</div><div class="sv" id="s-total">0</div></div>
+    <div class="sc"><div class="sl">Stock normal</div><div class="sv ok" id="s-ok">0</div></div>
+    <div class="sc"><div class="sl">Stock bajo (&lt;5)</div><div class="sv warn" id="s-low">0</div></div>
+    <div class="sc"><div class="sl">Sin stock</div><div class="sv bad" id="s-zero">0</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- FORMULARIO RF3 -->
+    <div class="card" id="form-card">
+      <div class="ca"></div>
+      <p class="ct" id="form-title">Nuevo producto</p>
+      <div class="emsg" id="ferr"></div>
+      <div class="omsg" id="fok"></div>
+
+      <div class="fg">
+        <label class="fl">Código de barras</label>
+        <div class="bwrap">
+          <input class="fi" id="f-bc" type="text" placeholder="Ej. 7501000000001" autocomplete="off" maxlength="30"/>
+          <button class="bscan" onclick="genCodigo()" title="Generar código automático">🔢</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Nombre del producto</label>
+        <input class="fi" id="f-nom" type="text" placeholder="Ej. Café Americano 250g"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Categoría</label>
+        <select class="fs" id="f-cat">
+          <option value="">Selecciona categoría</option>
+          <option>Bebidas</option><option>Alimentos</option><option>Granos y café</option>
+          <option>Lácteos</option><option>Siropes y jarabes</option><option>Utensilios</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="r2">
+        <div class="fg">
+          <label class="fl">Stock inicial</label>
+          <input class="fi" id="f-stk" type="number" min="0" placeholder="0"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Unidad</label>
+          <select class="fs" id="f-uni">
+            <option value="">Unidad</option>
+            <option>Piezas</option><option>Kilos</option><option>Gramos</option>
+            <option>Litros</option><option>Mililitros</option><option>Cajas</option><option>Bolsas</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Stock mínimo (alerta)</label>
+        <input class="fi" id="f-min" type="number" min="0" placeholder="Ej. 5"/>
+      </div>
+
+      <button class="btn-p" id="btn-save" onclick="guardar()">Registrar producto</button>
+      <button class="btn-s" id="btn-cancel" onclick="cancelar()">Cancelar edición</button>
+    </div>
+
+    <!-- LISTADO RF8 RF9 -->
+    <div class="card">
+      <div class="ca"></div>
+      <div class="thead-row">
+        <p class="ct" style="margin-bottom:0">Catálogo de productos</p>
+        <div class="frow">
+          <!-- RF9: búsqueda -->
+          <input class="search" id="buscar" type="text" placeholder="Buscar nombre, código, categoría…" oninput="render()"/>
+          <!-- filtro stock bajo RF10 -->
+          <button class="fb" id="fb-low" onclick="toggleFiltroLow()">⚠ Stock bajo</button>
+          <button class="clr" onclick="confirmarLimpiar()">Limpiar todo</button>
+        </div>
+      </div>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th><th>Nombre</th><th>Categoría</th>
+              <th>Stock</th><th>Mínimo</th><th>Unidad</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="empty">
+          <div class="empty-icon">🛒</div>
+          <div class="empty-text">Aún no hay productos registrados</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RF4 -->
+<div class="ov" id="modal">
+  <div class="mb">
+    <div class="mba"></div>
+    <button class="xb" onclick="cerrarModal()">&#x2715;</button>
+    <p class="mt">Editar producto</p>
+    <input type="hidden" id="m-id"/>
+    <div class="fg"><label class="fl">Código de barras</label><input class="fi" id="m-bc" type="text" maxlength="30"/></div>
+    <div class="fg"><label class="fl">Nombre</label><input class="fi" id="m-nom" type="text"/></div>
+    <div class="fg">
+      <label class="fl">Categoría</label>
+      <select class="fs" id="m-cat">
+        <option value="">Selecciona</option>
+        <option>Bebidas</option><option>Alimentos</option><option>Granos y café</option>
+        <option>Lácteos</option><option>Siropes y jarabes</option><option>Utensilios</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="r2">
+      <div class="fg"><label class="fl">Stock</label><input class="fi" id="m-stk" type="number" min="0"/></div>
+      <div class="fg">
+        <label class="fl">Unidad</label>
+        <select class="fs" id="m-uni">
+          <option value="">Unidad</option>
+          <option>Piezas</option><option>Kilos</option><option>Gramos</option>
+          <option>Litros</option><option>Mililitros</option><option>Cajas</option><option>Bolsas</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Stock mínimo (alerta)</label><input class="fi" id="m-min" type="number" min="0"/></div>
+    <div class="mac">
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-p" style="margin-top:0" onclick="guardarEdicion()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sesión + RF13 ────────────────────────────────────────────────────
+const PERMISOS = {
+  administrador:['productos','movimientos','reportes'],
+  supervisor:   ['productos','movimientos','reportes'],
+  empleado:     ['movimientos'],
+};
+const sesRaw = localStorage.getItem('sbx_sesion');
+if (!sesRaw) { window.location.href='login.html'; }
+const ses = JSON.parse(sesRaw);
+document.getElementById('nav-nombre').textContent = ses.nombre;
+document.getElementById('nav-rol').textContent    = ses.rol.charAt(0).toUpperCase()+ses.rol.slice(1);
+document.getElementById('page-sub').textContent   = `Bienvenido, ${ses.nombre} · ${ses.rol}`;
+
+const perms = PERMISOS[ses.rol] || [];
+// Ocultar nav links sin permiso
+if (!perms.includes('reportes'))   document.getElementById('nav-rep').classList.add('hidden');
+// Si empleado intenta acceder a productos → redirigir
+if (!perms.includes('productos')) { window.location.href='movimientos.html'; }
+
+function logout() {
+  if (confirm('¿Cerrar sesión?')) { localStorage.removeItem('sbx_sesion'); window.location.href='login.html'; }
+}
+
+// ── Storage ──────────────────────────────────────────────────────────
+const GP = () => JSON.parse(localStorage.getItem('sbx_productos')||'[]');
+const SP = d => localStorage.setItem('sbx_productos', JSON.stringify(d));
+
+// ── Generar código ───────────────────────────────────────────────────
+function genCodigo() {
+  document.getElementById('f-bc').value = 'SBX'+Date.now().toString().slice(-8)+Math.floor(Math.random()*10000).toString().padStart(4,'0');
+}
+
+// ── Estado ───────────────────────────────────────────────────────────
+let filtroLow = false;
+let editingId = null;
+
+function toggleFiltroLow() {
+  filtroLow = !filtroLow;
+  document.getElementById('fb-low').className = filtroLow ? 'fb warn-on' : 'fb';
+  render();
+}
+
+// ── Guardar nuevo (RF3) ──────────────────────────────────────────────
+function guardar() {
+  const bc  = document.getElementById('f-bc').value.trim();
+  const nom = document.getElementById('f-nom').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  const stk = parseInt(document.getElementById('f-stk').value);
+  const uni = document.getElementById('f-uni').value;
+  const min = parseInt(document.getElementById('f-min').value)||5;
+  const ee = document.getElementById('ferr'), oe = document.getElementById('fok');
+  ee.style.display='none'; oe.style.display='none';
+  if (!bc)              { showErr('Ingresa o genera un código de barras.'); return; }
+  if (!nom)             { showErr('Ingresa el nombre del producto.'); return; }
+  if (!cat)             { showErr('Selecciona una categoría.'); return; }
+  if (isNaN(stk)||stk<0){ showErr('Ingresa un stock válido (mínimo 0).'); return; }
+  if (!uni)             { showErr('Selecciona la unidad.'); return; }
+  const prods = GP();
+  if (prods.find(p=>p.barcode===bc)) { showErr('Ya existe un producto con ese código.'); return; }
+  prods.push({id:Date.now(),barcode:bc,nombre:nom,categoria:cat,stock:stk,unidad:uni,stockMin:min});
+  SP(prods);
+  limpiarForm();
+  oe.textContent=`✓ "${nom}" registrado correctamente.`; oe.style.display='block';
+  setTimeout(()=>oe.style.display='none',3000);
+  render(); stats(); alertas();
+}
+
+function showErr(m){ const e=document.getElementById('ferr'); e.textContent=m; e.style.display='block'; }
+
+function limpiarForm(){
+  ['f-bc','f-nom','f-cat','f-stk','f-uni','f-min'].forEach(id=>document.getElementById(id).value='');
+}
+
+function cancelar(){
+  limpiarForm(); editingId=null;
+  document.getElementById('form-title').textContent='Nuevo producto';
+  document.getElementById('btn-save').textContent='Registrar producto';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('btn-save').onclick=guardar;
+}
+
+// ── Modal editar RF4 ─────────────────────────────────────────────────
+function abrirEdicion(id){
+  const p=GP().find(p=>p.id===id); if(!p)return;
+  document.getElementById('m-id').value =p.id;
+  document.getElementById('m-bc').value =p.barcode;
+  document.getElementById('m-nom').value=p.nombre;
+  document.getElementById('m-cat').value=p.categoria;
+  document.getElementById('m-stk').value=p.stock;
+  document.getElementById('m-uni').value=p.unidad;
+  document.getElementById('m-min').value=p.stockMin||5;
+  document.getElementById('modal').classList.add('open');
+}
+function cerrarModal(){ document.getElementById('modal').classList.remove('open'); }
+function guardarEdicion(){
+  const id =parseInt(document.getElementById('m-id').value);
+  const bc =document.getElementById('m-bc').value.trim();
+  const nom=document.getElementById('m-nom').value.trim();
+  const cat=document.getElementById('m-cat').value;
+  const stk=parseInt(document.getElementById('m-stk').value);
+  const uni=document.getElementById('m-uni').value;
+  const min=parseInt(document.getElementById('m-min').value)||5;
+  if (!bc||!nom||!cat||isNaN(stk)||stk<0||!uni){alert('Completa todos los campos.');return;}
+  const prods=GP();
+  if (prods.find(p=>p.barcode===bc&&p.id!==id)){alert('Ya existe otro producto con ese código.');return;}
+  const i=prods.findIndex(p=>p.id===id);
+  if(i!==-1) prods[i]={id,barcode:bc,nombre:nom,categoria:cat,stock:stk,unidad:uni,stockMin:min};
+  SP(prods); cerrarModal(); render(); stats(); alertas();
+}
+
+// ── Eliminar RF5 ─────────────────────────────────────────────────────
+function eliminar(id){
+  const p=GP().find(p=>p.id===id); if(!p)return;
+  if(!confirm(`¿Eliminar "${p.nombre}"?`))return;
+  SP(GP().filter(p=>p.id!==id)); render(); stats(); alertas();
+}
+function confirmarLimpiar(){
+  if(!confirm('¿Eliminar TODOS los productos del catálogo?'))return;
+  SP([]); render(); stats(); alertas();
+}
+
+// ── Render tabla RF8 RF9 ─────────────────────────────────────────────
+function render(){
+  const q=document.getElementById('buscar').value.toLowerCase();
+  let prods=GP().sort((a,b)=>a.nombre.localeCompare(b.nombre)); // RF8: orden alfabético
+  if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q)||p.barcode.toLowerCase().includes(q)||p.categoria.toLowerCase().includes(q));
+  if(filtroLow) prods=prods.filter(p=>p.stock<=(p.stockMin||5));
+  const tbody=document.getElementById('tbody'), empty=document.getElementById('empty');
+  if(!prods.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const esAdmin = ['administrador','supervisor'].includes(ses.rol);
+  tbody.innerHTML=prods.map(p=>{
+    const min=p.stockMin||5;
+    const cls=p.stock===0?'s-zero':p.stock<=min?'s-low':'s-ok';
+    const lbl=p.stock===0?'Sin stock':p.stock<=min?'Stock bajo':'Normal';
+    const acciones=esAdmin
+      ?`<button class="ic" onclick="abrirEdicion(${p.id})" title="Editar">✏️</button><button class="ic del" onclick="eliminar(${p.id})" title="Eliminar">🗑</button>`
+      :`<span style="font-size:12px;color:#9DC4AF">Solo lectura</span>`;
+    return`<tr>
+      <td style="font-size:12px;color:#5C8A70;font-family:monospace">${p.barcode}</td>
+      <td style="font-weight:500">${p.nombre}</td>
+      <td style="color:#5C8A70">${p.categoria}</td>
+      <td><span class="sbadge ${cls}">${p.stock} · ${lbl}</span></td>
+      <td style="font-size:12px;color:#9DC4AF">${min}</td>
+      <td style="font-size:12px;color:#9DC4AF">${p.unidad}</td>
+      <td>${acciones}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Stats ────────────────────────────────────────────────────────────
+function stats(){
+  const prods=GP();
+  const zero=prods.filter(p=>p.stock===0).length;
+  const low =prods.filter(p=>p.stock>0&&p.stock<=(p.stockMin||5)).length;
+  const ok  =prods.filter(p=>p.stock>(p.stockMin||5)).length;
+  document.getElementById('s-total').textContent=prods.length;
+  document.getElementById('s-ok').textContent=ok;
+  document.getElementById('s-low').textContent=low;
+  document.getElementById('s-zero').textContent=zero;
+}
+
+// ── RF10: alertas stock bajo ─────────────────────────────────────────
+function alertas(){
+  const criticos=GP().filter(p=>p.stock<=(p.stockMin||5));
+  const bar=document.getElementById('alert-bar');
+  if(criticos.length){
+    document.getElementById('alert-txt').textContent=
+      `${criticos.length} producto(s) con stock bajo o sin stock: ${criticos.slice(0,3).map(p=>p.nombre).join(', ')}${criticos.length>3?'…':''}`;
+    bar.classList.add('show');
+  } else { bar.classList.remove('show'); }
+}
+
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
+
+render(); stats(); alertas();
+</script>
+</body>
+</html>

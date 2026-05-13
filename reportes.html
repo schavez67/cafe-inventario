@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reportes - Starbucks Inventario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <!-- SheetJS para exportar Excel RF15 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:#F1F8F4;font-family:'DM Sans',sans-serif;color:#1E3932}
+    .navbar{background:#1E3932;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #CBA258;position:sticky;top:0;z-index:50;gap:1rem}
+    .nb{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nb img{width:34px;height:34px;object-fit:contain}
+    .nb span{font-family:'Lora',serif;font-size:16px;font-style:italic;color:#fff}
+    .nav-links{display:flex;align-items:center;gap:2px}
+    .nl{height:34px;padding:0 12px;border-radius:7px;background:transparent;border:none;font-size:13px;font-family:'DM Sans',sans-serif;color:#9DC4AF;cursor:pointer;text-decoration:none;display:flex;align-items:center;transition:all .15s;white-space:nowrap}
+    .nl:hover{background:rgba(255,255,255,.08);color:#fff}
+    .nl.on{background:rgba(255,255,255,.13);color:#fff;font-weight:500}
+    .nl.hidden{display:none}
+    .nr{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+    .nr-info{text-align:right}
+    .nr-name{font-size:13px;color:#fff;font-weight:500}
+    .nr-rol{font-size:11px;color:#9DC4AF}
+    .logout{height:30px;padding:0 12px;background:transparent;border:0.5px solid #5C8A70;border-radius:7px;color:#9DC4AF;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s}
+    .logout:hover{color:#fff;border-color:#9DC4AF}
+    .page{max-width:1120px;margin:0 auto;padding:2rem 1.5rem 4rem}
+    .ph{margin-bottom:1.75rem}
+    .pt{font-family:'Lora',serif;font-size:26px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:4px}
+    .ps{font-size:13px;color:#5C8A70;font-weight:300}
+    .gd{width:48px;height:2px;background:#CBA258;border-radius:2px;margin-top:10px}
+    /* FILTROS */
+    .filter-card{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+    .fca{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
+    .fct{font-family:'Lora',serif;font-size:17px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:1.1rem}
+    .filter-row{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:10px;align-items:end;flex-wrap:wrap}
+    @media(max-width:760px){.filter-row{grid-template-columns:1fr 1fr}}
+    .fl{display:block;font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+    .fi,.fs{width:100%;height:42px;padding:0 12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;color:#1E3932;outline:none;transition:border-color .15s;appearance:none}
+    .fi:focus,.fs:focus{border-color:#00704A;box-shadow:0 0 0 3px #D4EDE1}
+    .btn-p{height:42px;padding:0 20px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap}
+    .btn-p:hover{background:#1E3932}
+    .btn-xl{height:42px;padding:0 20px;background:#1E3932;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+    .btn-xl:hover{background:#00704A}
+    .btn-bk{height:42px;padding:0 20px;background:#CBA258;color:#1E3932;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+    .btn-bk:hover{opacity:.85}
+    /* STATS REPORTE */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .sc{background:#fff;border:0.5px solid #B7D4C0;border-radius:12px;padding:1rem 1.25rem}
+    .sl{font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+    .sv{font-family:'Lora',serif;font-size:28px;font-weight:600;color:#1E3932;line-height:1}
+    .sv.ent{color:#00704A} .sv.sal{color:#B45309} .sv.mer{color:#991B1B}
+    /* TABS */
+    .tabs{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid #B7D4C0;padding-bottom:0}
+    .tab{height:38px;padding:0 16px;background:transparent;border:none;border-bottom:2px solid transparent;font-size:13px;font-family:'DM Sans',sans-serif;color:#5C8A70;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+    .tab:hover{color:#1E3932}
+    .tab.on{color:#00704A;border-bottom-color:#00704A;font-weight:500}
+    /* TABLA */
+    .card{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:1.5rem;position:relative;overflow:hidden}
+    .ca{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
+    .tw{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead tr{background:#F1F8F4;border-bottom:1px solid #B7D4C0}
+    th{padding:9px 11px;text-align:left;font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    td{padding:10px 11px;border-bottom:0.5px solid #E8F4EE;color:#1E3932}
+    tbody tr:hover{background:#F7FBF8}
+    tbody tr:last-child td{border-bottom:none}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+    .b-ent{background:#DCFCE7;color:#166534}
+    .b-sal{background:#FEF3C7;color:#92400E}
+    .b-mer{background:#FEF2F2;color:#991B1B}
+    .sbadge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+    .s-ok{background:#DCFCE7;color:#166534} .s-low{background:#FEF3C7;color:#92400E} .s-zero{background:#FEF2F2;color:#991B1B}
+    .empty{text-align:center;padding:3rem 1rem;color:#9DC4AF}
+    .empty-icon{font-size:34px;margin-bottom:8px}
+    .empty-text{font-size:14px;font-weight:300}
+    /* RF14 backup */
+    .backup-card{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:1.5rem;margin-top:1.5rem;position:relative;overflow:hidden}
+    .bca{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#CBA258,#1E3932)}
+    .bct{font-family:'Lora',serif;font-size:17px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:.6rem}
+    .bsub{font-size:13px;color:#5C8A70;font-weight:300;margin-bottom:1rem}
+    .backup-row{display:flex;gap:10px;flex-wrap:wrap}
+    .ok-msg{background:#DCFCE7;color:#166534;font-size:13px;border-radius:8px;padding:8px 12px;margin-top:.75rem;display:none}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nb">
+    <svg style="width:34px;height:34px;flex-shrink:0" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="98" fill="#00704A"/><circle cx="100" cy="100" r="88" fill="none" stroke="#ffffff" stroke-width="3"/><ellipse cx="100" cy="88" rx="26" ry="30" fill="#ffffff"/><ellipse cx="100" cy="82" rx="18" ry="20" fill="#00704A"/><path d="M76 72 Q80 60 88 66 Q94 54 100 62 Q106 54 112 66 Q120 60 124 72 Z" fill="#ffffff"/><path d="M74 108 Q65 122 72 132 Q80 140 100 136 Q120 140 128 132 Q135 122 126 108 Q113 120 100 118 Q87 120 74 108Z" fill="#ffffff"/></svg>
+    <span>Inventario Starbucks</span>
+  </div>
+  <div class="nav-links">
+    <a href="productos.html"   class="nl" id="nav-prod">📦 Productos</a>
+    <a href="movimientos.html" class="nl" id="nav-mov">↕ Movimientos</a>
+    <a href="reportes.html"    class="nl on">📊 Reportes</a>
+  </div>
+  <div class="nr">
+    <div class="nr-info">
+      <div class="nr-name" id="nav-nombre"></div>
+      <div class="nr-rol"  id="nav-rol"></div>
+    </div>
+    <button class="logout" onclick="logout()">Cerrar sesión</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="ph">
+    <p class="pt">Reportes e informes</p>
+    <p class="ps" id="page-sub"></p>
+    <div class="gd"></div>
+  </div>
+
+  <!-- FILTROS RF11 -->
+  <div class="filter-card">
+    <div class="fca"></div>
+    <p class="fct">Filtrar por fechas y tipo</p>
+    <div class="filter-row">
+      <div>
+        <label class="fl">Fecha inicio</label>
+        <input class="fi" type="date" id="f-ini"/>
+      </div>
+      <div>
+        <label class="fl">Fecha fin</label>
+        <input class="fi" type="date" id="f-fin"/>
+      </div>
+      <div>
+        <label class="fl">Tipo de movimiento</label>
+        <select class="fs" id="f-tipo">
+          <option value="">Todos</option>
+          <option value="entrada">Entradas</option>
+          <option value="salida">Salidas</option>
+          <option value="merma">Mermas</option>
+        </select>
+      </div>
+      <button class="btn-p" onclick="aplicarFiltros()">Generar</button>
+      <!-- RF15: Exportar Excel -->
+      <button class="btn-xl" onclick="exportarExcel()">📥 Excel</button>
+    </div>
+  </div>
+
+  <!-- STATS DEL REPORTE -->
+  <div class="stats">
+    <div class="sc"><div class="sl">Movimientos</div><div class="sv" id="r-total">0</div></div>
+    <div class="sc"><div class="sl">Entradas</div><div class="sv ent" id="r-ent">0</div></div>
+    <div class="sc"><div class="sl">Salidas</div><div class="sv sal" id="r-sal">0</div></div>
+    <div class="sc"><div class="sl">Mermas</div><div class="sv mer" id="r-mer">0</div></div>
+    <div class="sc"><div class="sl">Productos en catálogo</div><div class="sv" id="r-prods">0</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" id="tab-movs"   onclick="setTab('movs')">📋 Movimientos</button>
+    <button class="tab"    id="tab-stock"  onclick="setTab('stock')">📦 Stock actual</button>
+    <button class="tab"    id="tab-mermas" onclick="setTab('mermas')">⚠ Mermas</button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="card">
+    <div class="ca"></div>
+    <div class="tw">
+      <table id="tabla-movs">
+        <thead><tr><th>#</th><th>Tipo</th><th>Producto</th><th>Código</th><th>Categoría</th><th>Cantidad</th><th>Empleado</th><th>Fecha</th><th>Notas</th></tr></thead>
+        <tbody id="tbody-movs"></tbody>
+      </table>
+      <table id="tabla-stock" style="display:none">
+        <thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Unidad</th><th>Estado</th></tr></thead>
+        <tbody id="tbody-stock"></tbody>
+      </table>
+      <table id="tabla-mermas" style="display:none">
+        <thead><tr><th>#</th><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Motivo</th><th>Empleado</th><th>Fecha</th></tr></thead>
+        <tbody id="tbody-mermas"></tbody>
+      </table>
+      <div class="empty" id="empty">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">Aplica los filtros para generar el reporte</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RF14: Respaldo -->
+  <div class="backup-card">
+    <div class="bca"></div>
+    <p class="bct">Respaldo de base de datos (RF14)</p>
+    <p class="bsub">Descarga una copia de todos los datos del sistema o restaura desde un respaldo previo.</p>
+    <div class="backup-row">
+      <button class="btn-bk" onclick="descargarRespaldo()">💾 Descargar respaldo (.json)</button>
+      <label class="btn-bk" style="cursor:pointer;display:inline-flex;align-items:center">
+        📂 Restaurar respaldo
+        <input type="file" accept=".json" id="restore-file" style="display:none" onchange="restaurarRespaldo(event)"/>
+      </label>
+    </div>
+    <div class="ok-msg" id="ok-restore">✓ Respaldo restaurado correctamente. Recarga la página para ver los cambios.</div>
+  </div>
+</div>
+
+<script>
+// ── Sesión RF13 ──────────────────────────────────────────────────────
+const PERMISOS={administrador:['productos','movimientos','reportes'],supervisor:['productos','movimientos','reportes'],empleado:['movimientos']};
+const sesRaw=localStorage.getItem('sbx_sesion');
+if(!sesRaw){window.location.href='login.html';}
+const ses=JSON.parse(sesRaw);
+document.getElementById('nav-nombre').textContent=ses.nombre;
+document.getElementById('nav-rol').textContent=ses.rol.charAt(0).toUpperCase()+ses.rol.slice(1);
+document.getElementById('page-sub').textContent=`Bienvenido, ${ses.nombre} · ${ses.rol}`;
+const perms=PERMISOS[ses.rol]||[];
+if(!perms.includes('reportes')){window.location.href='movimientos.html';}
+if(!perms.includes('productos')) document.getElementById('nav-prod').classList.add('hidden');
+
+function logout(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('sbx_sesion');window.location.href='login.html';}}
+
+// ── Storage ──────────────────────────────────────────────────────────
+const GM=()=>JSON.parse(localStorage.getItem('sbx_movimientos')||'[]');
+const GP=()=>JSON.parse(localStorage.getItem('sbx_productos')||'[]');
+
+// ── Estado ───────────────────────────────────────────────────────────
+let tabActual='movs';
+let datosActuales=[];
+
+// Fechas por defecto: último mes
+const hoy=new Date();
+const hace30=new Date(hoy); hace30.setDate(hoy.getDate()-30);
+document.getElementById('f-ini').value=hace30.toISOString().slice(0,10);
+document.getElementById('f-fin').value=hoy.toISOString().slice(0,10);
+
+function setTab(t){
+  tabActual=t;
+  ['movs','stock','mermas'].forEach(id=>{
+    document.getElementById(`tab-${id}`).className=id===t?'tab on':'tab';
+    document.getElementById(`tabla-${id}`).style.display=id===t?'table':'none';
+  });
+  aplicarFiltros();
+}
+
+// ── RF11: Generar reporte por fechas ─────────────────────────────────
+function aplicarFiltros(){
+  const ini  = document.getElementById('f-ini').value;
+  const fin  = document.getElementById('f-fin').value;
+  const tipo = document.getElementById('f-tipo').value;
+  const movs = GM();
+  const empty= document.getElementById('empty');
+
+  let filtrados=movs.filter(m=>{
+    const [d,mo,a]=m.fecha.split(' ')[0].split('/');
+    const fechaStr=`${a}-${mo}-${d}`;
+    if(ini && fechaStr<ini) return false;
+    if(fin && fechaStr>fin) return false;
+    if(tipo && m.tipo!==tipo) return false;
+    return true;
+  });
+
+  datosActuales=filtrados;
+
+  // Stats
+  document.getElementById('r-total').textContent=filtrados.length;
+  document.getElementById('r-ent').textContent=filtrados.filter(m=>m.tipo==='entrada').length;
+  document.getElementById('r-sal').textContent=filtrados.filter(m=>m.tipo==='salida').length;
+  document.getElementById('r-mer').textContent=filtrados.filter(m=>m.tipo==='merma').length;
+  document.getElementById('r-prods').textContent=GP().length;
+
+  const cls={entrada:'b-ent',salida:'b-sal',merma:'b-mer'};
+  const lbl={entrada:'⬆ Entrada',salida:'⬇ Salida',merma:'⚠ Merma'};
+
+  if(tabActual==='movs'){
+    const tbody=document.getElementById('tbody-movs');
+    if(!filtrados.length){tbody.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    tbody.innerHTML=filtrados.map((m,i)=>`
+      <tr>
+        <td style="color:#9DC4AF;font-size:12px">${filtrados.length-i}</td>
+        <td><span class="badge ${cls[m.tipo]||'b-ent'}">${lbl[m.tipo]||m.tipo}</span></td>
+        <td style="font-weight:500">${m.producto}</td>
+        <td style="font-size:12px;color:#5C8A70;font-family:monospace">${m.barcode||'—'}</td>
+        <td style="color:#5C8A70">${m.categoria}</td>
+        <td>${m.cantidad} <span style="color:#9DC4AF;font-size:12px">${m.unidad}</span></td>
+        <td style="font-size:12px;color:#5C8A70">${m.empleado||'—'}</td>
+        <td style="color:#5C8A70;font-size:12px;white-space:nowrap">${m.fecha}</td>
+        <td style="color:#9DC4AF;font-size:12px">${m.notas||'—'}</td>
+      </tr>`).join('');
+  }
+
+  if(tabActual==='stock'){
+    const prods=GP().sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    const tbody=document.getElementById('tbody-stock');
+    if(!prods.length){tbody.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    tbody.innerHTML=prods.map(p=>{
+      const min=p.stockMin||5;
+      const c=p.stock===0?'s-zero':p.stock<=min?'s-low':'s-ok';
+      const l=p.stock===0?'Sin stock':p.stock<=min?'Stock bajo':'Normal';
+      return`<tr>
+        <td style="font-size:12px;color:#5C8A70;font-family:monospace">${p.barcode}</td>
+        <td style="font-weight:500">${p.nombre}</td>
+        <td style="color:#5C8A70">${p.categoria}</td>
+        <td style="font-weight:500">${p.stock}</td>
+        <td style="color:#9DC4AF;font-size:12px">${min}</td>
+        <td style="color:#9DC4AF;font-size:12px">${p.unidad}</td>
+        <td><span class="sbadge ${c}">${l}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  if(tabActual==='mermas'){
+    const mermas=filtrados.filter(m=>m.tipo==='merma');
+    const tbody=document.getElementById('tbody-mermas');
+    if(!mermas.length){tbody.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    tbody.innerHTML=mermas.map((m,i)=>`
+      <tr>
+        <td style="color:#9DC4AF;font-size:12px">${mermas.length-i}</td>
+        <td style="font-weight:500">${m.producto}</td>
+        <td style="color:#5C8A70">${m.categoria}</td>
+        <td>${m.cantidad} <span style="color:#9DC4AF;font-size:12px">${m.unidad}</span></td>
+        <td style="color:#991B1B;font-size:12px">${m.notas||'—'}</td>
+        <td style="font-size:12px;color:#5C8A70">${m.empleado||'—'}</td>
+        <td style="color:#5C8A70;font-size:12px;white-space:nowrap">${m.fecha}</td>
+      </tr>`).join('');
+  }
+}
+
+// ── RF15: Exportar Excel ─────────────────────────────────────────────
+function exportarExcel(){
+  const wb=XLSX.utils.book_new();
+
+  // Hoja 1: Movimientos filtrados
+  const movData=datosActuales.length?datosActuales:GM();
+  const movRows=movData.map(m=>({
+    'Tipo':m.tipo,'Producto':m.producto,'Código de barras':m.barcode||'',
+    'Categoría':m.categoria,'Cantidad':m.cantidad,'Unidad':m.unidad,
+    'Empleado':m.empleado||'','Fecha':m.fecha,'Notas':m.notas||''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movRows), 'Movimientos');
+
+  // Hoja 2: Stock actual
+  const stockRows=GP().sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(p=>({
+    'Código de barras':p.barcode,'Nombre':p.nombre,'Categoría':p.categoria,
+    'Stock actual':p.stock,'Stock mínimo':p.stockMin||5,'Unidad':p.unidad,
+    'Estado':p.stock===0?'Sin stock':p.stock<=(p.stockMin||5)?'Stock bajo':'Normal'
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows), 'Stock actual');
+
+  // Hoja 3: Mermas
+  const mermasRows=movData.filter(m=>m.tipo==='merma').map(m=>({
+    'Producto':m.producto,'Categoría':m.categoria,'Cantidad':m.cantidad,
+    'Unidad':m.unidad,'Motivo':m.notas||'','Empleado':m.empleado||'','Fecha':m.fecha
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mermasRows.length?mermasRows:[{Nota:'Sin mermas registradas'}]), 'Mermas');
+
+  const fecha=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `reporte_starbucks_${fecha}.xlsx`);
+}
+
+// ── RF14: Respaldo ───────────────────────────────────────────────────
+function descargarRespaldo(){
+  const datos={
+    sbx_productos:   JSON.parse(localStorage.getItem('sbx_productos')||'[]'),
+    sbx_movimientos: JSON.parse(localStorage.getItem('sbx_movimientos')||'[]'),
+    sbx_sesion:      JSON.parse(localStorage.getItem('sbx_sesion')||'null'),
+    fecha_respaldo:  new Date().toISOString()
+  };
+  const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`respaldo_starbucks_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function restaurarRespaldo(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const datos=JSON.parse(ev.target.result);
+      if(datos.sbx_productos)   localStorage.setItem('sbx_productos',  JSON.stringify(datos.sbx_productos));
+      if(datos.sbx_movimientos) localStorage.setItem('sbx_movimientos',JSON.stringify(datos.sbx_movimientos));
+      document.getElementById('ok-restore').style.display='block';
+      setTimeout(()=>{ window.location.reload(); },2000);
+    }catch{alert('Archivo de respaldo inválido.');}
+  };
+  reader.readAsText(file);
+}
+
+// Init
+aplicarFiltros();
+</script>
+</body>
+</html>

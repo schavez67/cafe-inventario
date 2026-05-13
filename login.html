@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Starbucks Inventario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F1F8F4;font-family:'DM Sans',sans-serif;padding:2rem 1rem}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(0,112,74,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(203,162,88,.08) 0%,transparent 60%);pointer-events:none}
+    .login-card{width:100%;max-width:420px;background:#fff;border:0.5px solid #B7D4C0;border-radius:20px;padding:2.5rem 2rem;position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,112,74,.08);animation:fadeUp .5s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .accent-bar{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#00704A 0%,#1E3932 60%,#CBA258 100%)}
+    .logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.25rem}
+    .logo-svg{width:88px;height:88px;margin-bottom:.25rem;filter:drop-shadow(0 2px 8px rgba(0,112,74,.15))}
+    .login-title{font-family:'Lora',serif;font-size:24px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:4px;text-align:center}
+    .login-sub{font-size:14px;color:#5C8A70;font-weight:300;margin-bottom:1.25rem;text-align:center}
+    .gold-divider{width:40px;height:2px;background:#CBA258;border-radius:2px;margin:0 auto 1.5rem}
+    .error-msg{background:#FEF2F2;color:#991B1B;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:none}
+    .field-group{margin-bottom:1rem}
+    .field-label{display:block;font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+    .field-input{width:100%;height:44px;padding:0 12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;color:#1E3932;outline:none;transition:border-color .15s,box-shadow .15s}
+    .field-input:focus{border-color:#00704A;box-shadow:0 0 0 3px #D4EDE1}
+    .field-input::placeholder{color:#9DC4AF}
+    .field-row{display:flex;justify-content:flex-end;margin:-4px 0 1.5rem}
+    .forgot-link{font-size:12px;color:#00704A;text-decoration:none;font-weight:500}
+    .forgot-link:hover{text-decoration:underline}
+    .btn-primary{width:100%;height:46px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:1.75rem}
+    .btn-primary:hover{background:#1E3932}.btn-primary:active{transform:scale(.98)}.btn-primary:disabled{opacity:.7;cursor:not-allowed}
+    .hint-text{font-size:12px;color:#5C8A70;text-align:center;line-height:1.6}
+    .demo-box{margin-top:1.5rem;border-top:0.5px solid #B7D4C0;padding-top:1.25rem}
+    .demo-title{font-size:11px;font-weight:500;color:#5C8A70;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+    .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .demo-btn{height:36px;background:#F1F8F4;border:0.5px solid #B7D4C0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;color:#1E3932;cursor:pointer;transition:all .15s;padding:0 8px}
+    .demo-btn:hover{background:#E8F4EE;border-color:#00704A}
+    .modal-overlay{position:fixed;inset:0;background:rgba(30,57,50,.4);display:none;align-items:center;justify-content:center;z-index:100}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:#fff;border:0.5px solid #B7D4C0;border-radius:16px;padding:2rem;width:100%;max-width:380px;position:relative;margin:1rem;overflow:hidden}
+    .modal-accent{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#00704A,#1E3932 60%,#CBA258)}
+    .modal-title{font-family:'Lora',serif;font-size:20px;font-weight:400;font-style:italic;color:#1E3932;margin-bottom:6px}
+    .modal-sub{font-size:13px;color:#5C8A70;font-weight:300;margin-bottom:1.5rem;line-height:1.6}
+    .modal-success{background:#DCFCE7;color:#166534;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:none}
+    .modal-error{background:#FEF2F2;color:#991B1B;font-size:13px;border-radius:8px;padding:8px 12px;margin-bottom:1rem;display:none}
+    .btn-close{position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;font-size:20px;color:#5C8A70;line-height:1}
+    .btn-secondary{width:100%;height:44px;background:#00704A;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
+    .btn-secondary:hover{background:#1E3932}.btn-secondary:disabled{opacity:.7;cursor:not-allowed}
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="accent-bar"></div>
+    <div class="logo-wrap">
+      <svg class="logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="98" fill="#00704A"/>
+        <circle cx="100" cy="100" r="88" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+        <circle cx="100" cy="100" r="72" fill="#00704A"/>
+        <ellipse cx="100" cy="88" rx="26" ry="30" fill="#ffffff"/>
+        <ellipse cx="100" cy="82" rx="18" ry="20" fill="#00704A"/>
+        <path d="M76 72 Q80 60 88 66 Q94 54 100 62 Q106 54 112 66 Q120 60 124 72 Z" fill="#ffffff"/>
+        <path d="M74 108 Q65 122 72 132 Q80 140 100 136 Q120 140 128 132 Q135 122 126 108 Q113 120 100 118 Q87 120 74 108Z" fill="#ffffff"/>
+        <path id="topArc" d="M 30,100 A 70,70 0 0,1 170,100" fill="none"/>
+        <path id="botArc" d="M 35,110 A 70,70 0 0,0 165,110" fill="none"/>
+        <text font-family="Georgia,serif" font-size="13" fill="#ffffff" font-weight="bold" letter-spacing="3">
+          <textPath href="#topArc" startOffset="8%">STARBUCKS COFFEE</textPath>
+        </text>
+        <text font-family="Georgia,serif" font-size="11" fill="#ffffff" letter-spacing="2">
+          <textPath href="#botArc" startOffset="18%">✦ INVENTARIO ✦</textPath>
+        </text>
+      </svg>
+    </div>
+    <p class="login-title">Bienvenido de vuelta</p>
+    <p class="login-sub">Ingresa tus credenciales para continuar</p>
+    <div class="gold-divider"></div>
+    <div class="error-msg" id="err-msg"></div>
+    <div class="field-group">
+      <label class="field-label" for="emp-num">Número de empleado</label>
+      <input class="field-input" id="emp-num" type="text" placeholder="Ej. 000123" autocomplete="off" maxlength="20"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="password">Contraseña</label>
+      <input class="field-input" id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="field-row">
+      <a href="#" class="forgot-link" id="open-modal">¿Olvidaste tu contraseña?</a>
+    </div>
+    <button class="btn-primary" id="btn-login">Iniciar sesión</button>
+    <p class="hint-text">Si tienes problemas para acceder,<br>contacta a tu administrador de sistema.</p>
+    <div class="demo-box">
+      <p class="demo-title">Accesos rápidos de prueba</p>
+      <div class="demo-grid">
+        <button class="demo-btn" onclick="fillDemo('000001','admin123')">👑 Administrador</button>
+        <button class="demo-btn" onclick="fillDemo('000200','supervisor1')">🔑 Supervisor</button>
+        <button class="demo-btn" onclick="fillDemo('000101','barista1')">☕ Barista (Ana)</button>
+        <button class="demo-btn" onclick="fillDemo('000102','barista2')">☕ Barista (Luis)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <div class="modal-accent"></div>
+      <button class="btn-close" id="close-modal">&#x2715;</button>
+      <p class="modal-title">Recuperar contraseña</p>
+      <p class="modal-sub">Ingresa el correo asociado a tu número de empleado y te enviaremos instrucciones.</p>
+      <div class="modal-success" id="modal-success">Correo enviado. Revisa tu bandeja de entrada.</div>
+      <div class="modal-error" id="modal-error">No se pudo enviar el correo. Intenta de nuevo.</div>
+      <div class="field-group">
+        <label class="field-label" for="recovery-email">Correo electrónico</label>
+        <input class="field-input" id="recovery-email" type="email" placeholder="tucorreo@empresa.com"/>
+      </div>
+      <button class="btn-secondary" id="btn-send">Enviar instrucciones</button>
+    </div>
+  </div>
+
+  <script>
+    const API='https://cafeinventario.andreachavez2313.workers.dev';
+    emailjs.init('qk1KC3ulGtdGXjJ-I');
+    const PERMISOS={administrador:['productos','movimientos','reportes','usuarios'],supervisor:['productos','movimientos','reportes'],empleado:['movimientos']};
+    function paginaInicio(rol){return rol==='empleado'?'movimientos.html':'productos.html';}
+    const sesActiva=localStorage.getItem('sbx_sesion');
+    if(sesActiva){const s=JSON.parse(sesActiva);window.location.href=paginaInicio(s.rol);}
+    function fillDemo(num,pwd){document.getElementById('emp-num').value=num;document.getElementById('password').value=pwd;}
+    const btnLogin=document.getElementById('btn-login'),empInput=document.getElementById('emp-num'),passInput=document.getElementById('password'),errMsg=document.getElementById('err-msg');
+    function showError(msg){errMsg.textContent=msg;errMsg.style.display='block';}
+    function hideError(){errMsg.style.display='none';}
+    async function handleLogin(){
+      const emp=empInput.value.trim(),pass=passInput.value;
+      hideError();
+      if(!emp||!pass){showError('Por favor completa todos los campos.');return;}
+      btnLogin.textContent='Verificando...';btnLogin.disabled=true;
+      try{
+        const res=await fetch(`${API}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero:emp,password:pass})});
+        const data=await res.json();
+        if(res.ok&&data.ok){
+          localStorage.setItem('sbx_sesion',JSON.stringify({numero:emp,nombre:data.nombre,rol:data.rol,permisos:PERMISOS[data.rol]||[]}));
+          window.location.href=paginaInicio(data.rol);
+        } else {showError('Número de empleado o contraseña incorrectos.');btnLogin.textContent='Iniciar sesión';btnLogin.disabled=false;}
+      } catch(e){showError('Error de conexión. Intenta de nuevo.');btnLogin.textContent='Iniciar sesión';btnLogin.disabled=false;}
+    }
+    btnLogin.addEventListener('click',handleLogin);
+    passInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
+    document.getElementById('open-modal').addEventListener('click',e=>{e.preventDefault();document.getElementById('modal').classList.add('open');document.getElementById('modal-success').style.display='none';document.getElementById('modal-error').style.display='none';document.getElementById('recovery-email').value='';});
+    document.getElementById('close-modal').addEventListener('click',()=>document.getElementById('modal').classList.remove('open'));
+    document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');});
+    document.getElementById('btn-send').addEventListener('click',()=>{
+      const email=document.getElementById('recovery-email').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Ingresa un correo válido.');return;}
+      const btn=document.getElementById('btn-send');btn.textContent='Enviando...';btn.disabled=true;
+      emailjs.send('service_0fivaie','template_lky622c',{to_email:email,link:API})
+      .then(()=>{document.getElementById('modal-success').style.display='block';document.getElementById('modal-error').style.display='none';})
+      .catch(()=>{document.getElementById('modal-error').style.display='block';document.getElementById('modal-success').style.display='none';})
+      .finally(()=>{btn.textContent='Enviar instrucciones';btn.disabled=false;});
+    });
+  </script>
+</body>
+</html>
