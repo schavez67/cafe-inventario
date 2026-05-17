@@ -225,8 +225,11 @@
   </div>
 </div>
 
+
 <script>
-// ── Sesión RF13 ──────────────────────────────────────────────────────
+const API = 'https://cafeinventario.andreachavez2313.workers.dev';
+
+// ── Sesión ───────────────────────────────────────────────────────────
 const PERMISOS = {
   administrador:['productos','movimientos','reportes'],
   supervisor:   ['productos','movimientos','reportes'],
@@ -237,175 +240,157 @@ if (!sesRaw) { window.location.href='login.html'; }
 const ses = JSON.parse(sesRaw);
 document.getElementById('nav-nombre').textContent = ses.nombre;
 document.getElementById('nav-rol').textContent    = ses.rol.charAt(0).toUpperCase()+ses.rol.slice(1);
-document.getElementById('page-sub').textContent   = `Bienvenido, ${ses.nombre} · ${ses.rol}`;
-const perms = PERMISOS[ses.rol]||[];
-if (!perms.includes('productos'))  document.getElementById('nav-prod').classList.add('hidden');
-if (!perms.includes('reportes'))   document.getElementById('nav-rep').classList.add('hidden');
 
-function logout(){
-  if(confirm('¿Cerrar sesión?')){ localStorage.removeItem('sbx_sesion'); window.location.href='login.html'; }
+const perms = PERMISOS[ses.rol] || [];
+if (!perms.includes('reportes')) document.getElementById('nav-rep').classList.add('hidden');
+if (ses.rol === 'empleado') {
+  document.getElementById('nav-prod').classList.add('hidden');
 }
 
-// ── Storage ──────────────────────────────────────────────────────────
-const GM = ()=>JSON.parse(localStorage.getItem('sbx_movimientos')||'[]');
-const SM = d=>localStorage.setItem('sbx_movimientos',JSON.stringify(d));
-const GP = ()=>JSON.parse(localStorage.getItem('sbx_productos')||'[]');
-const SP = d=>localStorage.setItem('sbx_productos',JSON.stringify(d));
+function logout() {
+  if (confirm('¿Cerrar sesión?')) { localStorage.removeItem('sbx_sesion'); window.location.href='login.html'; }
+}
 
 // ── Estado ───────────────────────────────────────────────────────────
-let tipo='entrada', filtro='todos';
+let filtroTipo = 'todos';
+let productos  = [];
 
-function setTipo(t){
-  tipo=t;
-  document.getElementById('bt-ent').className = t==='entrada'?'tbtn t-ent':'tbtn';
-  document.getElementById('bt-sal').className = t==='salida' ?'tbtn t-sal':'tbtn';
-  document.getElementById('bt-mer').className = t==='merma'  ?'tbtn t-mer':'tbtn';
-  document.getElementById('fg-motivo').style.display = t==='merma'?'block':'none';
+// ── Cargar productos para el select ──────────────────────────────────
+async function cargarProductos() {
+  try {
+    const res = await fetch(`${API}/productos`);
+    productos = await res.json();
+    const sel = document.getElementById('f-prod');
+    sel.innerHTML = '<option value="">Selecciona producto</option>';
+    productos.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.barcode;
+      opt.textContent = `${p.nombre} (${p.stock} ${p.unidad||'pzas'})`;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.error('Error cargando productos:', e); }
 }
 
-// ── RF6: buscar producto por código de barras ────────────────────────
-function buscarProducto(){
-  const bc=document.getElementById('f-bc').value.trim();
-  const info=document.getElementById('prod-info');
-  if(!bc){ info.style.display='none'; return; }
-  const p=GP().find(p=>p.barcode===bc);
-  if(p){
-    document.getElementById('f-bc').classList.add('scan-field');
-    document.getElementById('f-nom').value=p.nombre;
-    document.getElementById('f-cat').value=p.categoria;
-    document.getElementById('f-uni').value=p.unidad;
-    document.getElementById('pi-nom').textContent=p.nombre;
-    document.getElementById('pi-cat').textContent=p.categoria;
-    document.getElementById('pi-stk').textContent=`${p.stock} ${p.unidad}`;
-    info.style.display='block';
-  } else {
-    document.getElementById('f-bc').classList.remove('scan-field');
-    info.style.display='none';
-  }
+// ── Cargar historial de movimientos ──────────────────────────────────
+async function cargarMovimientos() {
+  try {
+    const res = await fetch(`${API}/movimientos`);
+    const movs = await res.json();
+    renderTabla(movs);
+    renderStats(movs);
+  } catch(e) { console.error('Error cargando movimientos:', e); }
 }
 
-// ── Registrar RF7 RF12 RF16 RF17 ────────────────────────────────────
-function registrar(){
-  const bc    = document.getElementById('f-bc').value.trim();
-  const nom   = document.getElementById('f-nom').value.trim();
-  const cat   = document.getElementById('f-cat').value;
-  const cant  = parseInt(document.getElementById('f-cant').value);
-  const uni   = document.getElementById('f-uni').value;
-  const notas = document.getElementById('f-notas').value.trim();
-  const motivo= document.getElementById('f-motivo').value;
-  const ee=document.getElementById('ferr'), oe=document.getElementById('fok');
+// ── Registrar movimiento manual ───────────────────────────────────────
+async function registrar() {
+  const prod_id  = document.getElementById('f-prod').value;
+  const cantidad = parseInt(document.getElementById('f-cant').value);
+  const tipo     = document.getElementById('f-tipo').value;
+  const notas    = document.getElementById('f-notas').value.trim();
+  const ee = document.getElementById('emsg'), oe = document.getElementById('omsg');
   ee.style.display='none'; oe.style.display='none';
-  if (!nom)             { showErr('Ingresa el nombre del producto.'); return; }
-  if (!cat)             { showErr('Selecciona una categoría.'); return; }
-  if (!cant||cant<1)    { showErr('Ingresa una cantidad válida.'); return; }
-  if (!uni)             { showErr('Selecciona la unidad.'); return; }
-  if (tipo==='merma'&&!motivo){ showErr('Selecciona el motivo de la merma.'); return; }
 
-  // RF17: validar stock suficiente para salidas y mermas
-  if (tipo==='salida'||tipo==='merma') {
-    const prods=GP();
-    const prod=bc?prods.find(p=>p.barcode===bc):prods.find(p=>p.nombre.toLowerCase()===nom.toLowerCase());
-    if (prod && prod.stock < cant) {
-      showErr(`RF17: Stock insuficiente. Stock actual: ${prod.stock} ${prod.unidad}. No se puede registrar la ${tipo}.`);
-      return;
+  if (!prod_id)           { showErr('Selecciona un producto.'); return; }
+  if (!cantidad||cantidad<1){ showErr('Ingresa una cantidad válida.'); return; }
+  if (!tipo)              { showErr('Selecciona el tipo de movimiento.'); return; }
+
+  try {
+    const res = await fetch(`${API}/movimientos`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        producto_id: prod_id,
+        cantidad: cantidad,
+        tipo: tipo,
+        empleado: ses.nombre,
+        notas: notas
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      oe.textContent = `✓ Movimiento registrado. Stock restante: ${data.stock_restante}`;
+      oe.style.display='block';
+      setTimeout(()=>oe.style.display='none',3000);
+      limpiarForm();
+      await cargarProductos();
+      await cargarMovimientos();
+      if (data.alerta) {
+        document.getElementById('alert-txt').textContent = `Stock bajo en el producto seleccionado.`;
+        document.getElementById('alert-bar').classList.add('show');
+      }
+    } else {
+      showErr(data.error || 'Error al registrar.');
     }
+  } catch(e) {
+    showErr('Error de conexión.');
   }
-
-  const movs=GM();
-  const nuevo={
-    id:Date.now(), tipo, barcode:bc, producto:nom, categoria:cat,
-    cantidad:cant, unidad:uni,
-    notas: tipo==='merma' ? `Merma: ${motivo}${notas?` · ${notas}`:''}` : notas,
-    empleado:ses.nombre, numeroEmp:ses.numero,
-    fecha:new Date().toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
-  };
-  movs.unshift(nuevo);
-  SM(movs);
-
-  // RF7: actualizar stock automáticamente
-  const prods=GP();
-  const idx=bc
-    ?prods.findIndex(p=>p.barcode===bc)
-    :prods.findIndex(p=>p.nombre.toLowerCase()===nom.toLowerCase());
-  if(idx!==-1){
-    if(tipo==='entrada') prods[idx].stock+=cant;
-    else                 prods[idx].stock=Math.max(0,prods[idx].stock-cant);
-    SP(prods);
-  }
-
-  // Limpiar
-  ['f-bc','f-nom','f-cant','f-notas'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-cat').value='';
-  document.getElementById('f-uni').value='';
-  document.getElementById('f-motivo').value='';
-  document.getElementById('prod-info').style.display='none';
-  document.getElementById('f-bc').classList.remove('scan-field');
-
-  const label=tipo==='entrada'?'Entrada':tipo==='salida'?'Salida':'Merma';
-  oe.textContent=`✓ ${label} de "${nom}" registrada correctamente.`;
-  oe.style.display='block';
-  setTimeout(()=>oe.style.display='none',3000);
-
-  render(); statsRender(); alertas();
 }
 
-function showErr(m){ const e=document.getElementById('ferr'); e.textContent=m; e.style.display='block'; }
+function showErr(m){ const e=document.getElementById('emsg'); e.textContent=m; e.style.display='block'; }
 
-// ── Filtro historial ─────────────────────────────────────────────────
-function setFiltro(f){
-  filtro=f;
-  document.getElementById('f-all').className = f==='todos'   ?'fb on'    :'fb';
-  document.getElementById('f-ent').className = f==='entrada' ?'fb ent-on':'fb';
-  document.getElementById('f-sal').className = f==='salida'  ?'fb sal-on':'fb';
-  document.getElementById('f-mer').className = f==='merma'   ?'fb mer-on':'fb';
-  render();
+function limpiarForm(){
+  document.getElementById('f-prod').value='';
+  document.getElementById('f-cant').value='';
+  document.getElementById('f-notas').value='';
 }
 
-function confirmarLimpiar(){
-  if(!confirm('¿Borrar todo el historial de movimientos?'))return;
-  SM([]); render(); statsRender();
-}
+// ── Render tabla movimientos ──────────────────────────────────────────
+function renderTabla(movs) {
+  const q = (document.getElementById('f-buscar')||{value:''}).value.toLowerCase();
+  let lista = [...movs];
+  if (filtroTipo !== 'todos') lista = lista.filter(m=>m.tipo===filtroTipo);
+  if (q) lista = lista.filter(m=>(m.producto_nombre||'').toLowerCase().includes(q)||(m.empleado||'').toLowerCase().includes(q));
 
-// ── Render tabla ─────────────────────────────────────────────────────
-function render(){
-  const movs=filtro==='todos'?GM():GM().filter(m=>m.tipo===filtro);
-  const tbody=document.getElementById('tbody'), empty=document.getElementById('empty');
-  if(!movs.length){tbody.innerHTML='';empty.style.display='block';return;}
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty');
+  if (!lista.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
-  const cls={entrada:'b-ent',salida:'b-sal',merma:'b-mer'};
-  const lbl={entrada:'⬆ Entrada',salida:'⬇ Salida',merma:'⚠ Merma'};
-  tbody.innerHTML=movs.map((m,i)=>`
-    <tr>
-      <td style="color:#9DC4AF;font-size:12px">${movs.length-i}</td>
-      <td><span class="badge ${cls[m.tipo]||'b-ent'}">${lbl[m.tipo]||m.tipo}</span></td>
-      <td style="font-weight:500">${m.producto}</td>
-      <td style="color:#5C8A70">${m.categoria}</td>
-      <td>${m.cantidad} <span style="color:#9DC4AF;font-size:12px">${m.unidad}</span></td>
-      <td style="font-size:12px;color:#5C8A70">${m.empleado||'—'}</td>
-      <td style="color:#5C8A70;font-size:12px;white-space:nowrap">${m.fecha}</td>
-      <td style="color:#9DC4AF;font-size:12px">${m.notas||'—'}</td>
-    </tr>`).join('');
+
+  tbody.innerHTML = lista.map(m=>{
+    const tipoCls = m.tipo==='entrada'?'b-ent':m.tipo==='salida'?'b-sal':'b-mer';
+    const tipoLbl = m.tipo==='entrada'?'↑ Entrada':m.tipo==='salida'?'↓ Salida':'✕ Merma';
+    const fecha   = m.fecha ? m.fecha.replace('T',' ').substring(0,16) : '—';
+    return `<tr>
+      <td style="font-size:12px;color:#5C8A70">${fecha}</td>
+      <td style="font-weight:500">${m.producto_nombre||m.producto_id||'—'}</td>
+      <td><span class="badge ${tipoCls}">${tipoLbl}</span></td>
+      <td style="font-weight:500">${m.cantidad} ${m.unidad||'pzas'}</td>
+      <td style="color:#5C8A70">${m.empleado||'—'}</td>
+      <td style="font-size:12px;color:#9DC4AF">${m.notas||'—'}</td>
+    </tr>`;
+  }).join('');
 }
 
-function statsRender(){
-  const movs=GM();
-  document.getElementById('s-total').textContent=movs.length;
-  document.getElementById('s-ent').textContent=movs.filter(m=>m.tipo==='entrada').length;
-  document.getElementById('s-sal').textContent=movs.filter(m=>m.tipo==='salida').length;
-  document.getElementById('s-mer').textContent=movs.filter(m=>m.tipo==='merma').length;
+// ── Stats ─────────────────────────────────────────────────────────────
+function renderStats(movs) {
+  const total   = movs.length;
+  const entradas= movs.filter(m=>m.tipo==='entrada').length;
+  const salidas = movs.filter(m=>m.tipo==='salida').length;
+  const mermas  = movs.filter(m=>m.tipo==='merma').length;
+  document.getElementById('s-total').textContent  = total;
+  document.getElementById('s-ent').textContent    = entradas;
+  document.getElementById('s-sal').textContent    = salidas;
+  document.getElementById('s-mer').textContent    = mermas;
 }
 
-function alertas(){
-  const criticos=GP().filter(p=>p.stock<=(p.stockMin||5));
-  const bar=document.getElementById('alert-bar');
-  if(criticos.length){
-    document.getElementById('alert-txt').textContent=
-      `${criticos.length} producto(s) con stock bajo: ${criticos.slice(0,3).map(p=>p.nombre).join(', ')}${criticos.length>3?'…':''}`;
-    bar.classList.add('show');
-  } else { bar.classList.remove('show'); }
+// ── Filtros ───────────────────────────────────────────────────────────
+function setFiltro(tipo) {
+  filtroTipo = tipo;
+  ['f-todos','f-ent','f-sal','f-mer'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.className='fb';
+  });
+  const mapa = {todos:'f-todos',entrada:'f-ent',salida:'f-sal',merma:'f-mer'};
+  const el = document.getElementById(mapa[tipo]);
+  if(el) el.className = tipo==='todos'?'fb on':tipo==='entrada'?'fb ent-on':tipo==='salida'?'fb sal-on':'fb mer-on';
+  cargarMovimientos();
 }
 
-render(); statsRender(); alertas();
+// Recargar cada 15 segundos para ver movimientos del ESP32
+setInterval(cargarMovimientos, 15000);
+
+cargarProductos();
+cargarMovimientos();
 </script>
 </body>
 </html>
