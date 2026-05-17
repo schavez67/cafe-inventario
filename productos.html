@@ -274,6 +274,10 @@
 
 <script>
 // ── Sesión + RF13 ────────────────────────────────────────────────────
+<script>
+const API = 'https://cafeinventario.andreachavez2313.workers.dev';
+
+// ── Sesión ───────────────────────────────────────────────────────────
 const PERMISOS = {
   administrador:['productos','movimientos','reportes'],
   supervisor:   ['productos','movimientos','reportes'],
@@ -287,27 +291,19 @@ document.getElementById('nav-rol').textContent    = ses.rol.charAt(0).toUpperCas
 document.getElementById('page-sub').textContent   = `Bienvenido, ${ses.nombre} · ${ses.rol}`;
 
 const perms = PERMISOS[ses.rol] || [];
-// Ocultar nav links sin permiso
-if (!perms.includes('reportes'))   document.getElementById('nav-rep').classList.add('hidden');
-// Si empleado intenta acceder a productos → redirigir
+if (!perms.includes('reportes'))  document.getElementById('nav-rep').classList.add('hidden');
 if (!perms.includes('productos')) { window.location.href='movimientos.html'; }
 
 function logout() {
   if (confirm('¿Cerrar sesión?')) { localStorage.removeItem('sbx_sesion'); window.location.href='login.html'; }
 }
 
-// ── Storage ──────────────────────────────────────────────────────────
-const GP = () => JSON.parse(localStorage.getItem('sbx_productos')||'[]');
-const SP = d => localStorage.setItem('sbx_productos', JSON.stringify(d));
-
 // ── Generar código ───────────────────────────────────────────────────
 function genCodigo() {
   document.getElementById('f-bc').value = 'SBX'+Date.now().toString().slice(-8)+Math.floor(Math.random()*10000).toString().padStart(4,'0');
 }
 
-// ── Estado ───────────────────────────────────────────────────────────
 let filtroLow = false;
-let editingId = null;
 
 function toggleFiltroLow() {
   filtroLow = !filtroLow;
@@ -315,8 +311,20 @@ function toggleFiltroLow() {
   render();
 }
 
-// ── Guardar nuevo (RF3) ──────────────────────────────────────────────
-function guardar() {
+// ── Cargar productos desde API ───────────────────────────────────────
+async function cargarProductos() {
+  try {
+    const res = await fetch(`${API}/productos`);
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    console.error('Error cargando productos:', e);
+    return [];
+  }
+}
+
+// ── Guardar nuevo producto ───────────────────────────────────────────
+async function guardar() {
   const bc  = document.getElementById('f-bc').value.trim();
   const nom = document.getElementById('f-nom').value.trim();
   const cat = document.getElementById('f-cat').value;
@@ -330,14 +338,25 @@ function guardar() {
   if (!cat)             { showErr('Selecciona una categoría.'); return; }
   if (isNaN(stk)||stk<0){ showErr('Ingresa un stock válido (mínimo 0).'); return; }
   if (!uni)             { showErr('Selecciona la unidad.'); return; }
-  const prods = GP();
-  if (prods.find(p=>p.barcode===bc)) { showErr('Ya existe un producto con ese código.'); return; }
-  prods.push({id:Date.now(),barcode:bc,nombre:nom,categoria:cat,stock:stk,unidad:uni,stockMin:min});
-  SP(prods);
-  limpiarForm();
-  oe.textContent=`✓ "${nom}" registrado correctamente.`; oe.style.display='block';
-  setTimeout(()=>oe.style.display='none',3000);
-  render(); stats(); alertas();
+
+  try {
+    const res = await fetch(`${API}/productos`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({barcode:bc, nombre:nom, categoria:cat, stock:stk, unidad:uni, stock_minimo:min})
+    });
+    const data = await res.json();
+    if (res.ok) {
+      limpiarForm();
+      oe.textContent=`✓ "${nom}" registrado correctamente.`; oe.style.display='block';
+      setTimeout(()=>oe.style.display='none',3000);
+      await render(); stats(); alertas();
+    } else {
+      showErr(data.error || 'Error al registrar producto.');
+    }
+  } catch(e) {
+    showErr('Error de conexión.');
+  }
 }
 
 function showErr(m){ const e=document.getElementById('ferr'); e.textContent=m; e.style.display='block'; }
@@ -347,69 +366,81 @@ function limpiarForm(){
 }
 
 function cancelar(){
-  limpiarForm(); editingId=null;
+  limpiarForm();
   document.getElementById('form-title').textContent='Nuevo producto';
   document.getElementById('btn-save').textContent='Registrar producto';
   document.getElementById('btn-cancel').style.display='none';
   document.getElementById('btn-save').onclick=guardar;
 }
 
-// ── Modal editar RF4 ─────────────────────────────────────────────────
-function abrirEdicion(id){
-  const p=GP().find(p=>p.id===id); if(!p)return;
-  document.getElementById('m-id').value =p.id;
-  document.getElementById('m-bc').value =p.barcode;
-  document.getElementById('m-nom').value=p.nombre;
-  document.getElementById('m-cat').value=p.categoria;
-  document.getElementById('m-stk').value=p.stock;
-  document.getElementById('m-uni').value=p.unidad;
-  document.getElementById('m-min').value=p.stockMin||5;
+// ── Modal editar ─────────────────────────────────────────────────────
+function abrirEdicion(id, barcode, nombre, categoria, stock, unidad, stockMin){
+  document.getElementById('m-id').value  = id;
+  document.getElementById('m-bc').value  = barcode;
+  document.getElementById('m-nom').value = nombre;
+  document.getElementById('m-cat').value = categoria;
+  document.getElementById('m-stk').value = stock;
+  document.getElementById('m-uni').value = unidad;
+  document.getElementById('m-min').value = stockMin||5;
   document.getElementById('modal').classList.add('open');
 }
+
 function cerrarModal(){ document.getElementById('modal').classList.remove('open'); }
-function guardarEdicion(){
-  const id =parseInt(document.getElementById('m-id').value);
-  const bc =document.getElementById('m-bc').value.trim();
-  const nom=document.getElementById('m-nom').value.trim();
-  const cat=document.getElementById('m-cat').value;
-  const stk=parseInt(document.getElementById('m-stk').value);
-  const uni=document.getElementById('m-uni').value;
-  const min=parseInt(document.getElementById('m-min').value)||5;
+
+async function guardarEdicion(){
+  const id  = parseInt(document.getElementById('m-id').value);
+  const bc  = document.getElementById('m-bc').value.trim();
+  const nom = document.getElementById('m-nom').value.trim();
+  const cat = document.getElementById('m-cat').value;
+  const stk = parseInt(document.getElementById('m-stk').value);
+  const uni = document.getElementById('m-uni').value;
+  const min = parseInt(document.getElementById('m-min').value)||5;
   if (!bc||!nom||!cat||isNaN(stk)||stk<0||!uni){alert('Completa todos los campos.');return;}
-  const prods=GP();
-  if (prods.find(p=>p.barcode===bc&&p.id!==id)){alert('Ya existe otro producto con ese código.');return;}
-  const i=prods.findIndex(p=>p.id===id);
-  if(i!==-1) prods[i]={id,barcode:bc,nombre:nom,categoria:cat,stock:stk,unidad:uni,stockMin:min};
-  SP(prods); cerrarModal(); render(); stats(); alertas();
+
+  try {
+    const res = await fetch(`${API}/productos/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({barcode:bc, nombre:nom, categoria:cat, stock:stk, unidad:uni, stock_minimo:min})
+    });
+    if (res.ok) {
+      cerrarModal(); await render(); stats(); alertas();
+    } else {
+      alert('Error al guardar cambios.');
+    }
+  } catch(e) {
+    alert('Error de conexión.');
+  }
 }
 
-// ── Eliminar RF5 ─────────────────────────────────────────────────────
-function eliminar(id){
-  const p=GP().find(p=>p.id===id); if(!p)return;
-  if(!confirm(`¿Eliminar "${p.nombre}"?`))return;
-  SP(GP().filter(p=>p.id!==id)); render(); stats(); alertas();
-}
-function confirmarLimpiar(){
-  if(!confirm('¿Eliminar TODOS los productos del catálogo?'))return;
-  SP([]); render(); stats(); alertas();
+// ── Eliminar ─────────────────────────────────────────────────────────
+async function eliminar(id, nombre){
+  if(!confirm(`¿Eliminar "${nombre}"?`))return;
+  try {
+    await fetch(`${API}/productos/${id}`, {method:'DELETE'});
+    await render(); stats(); alertas();
+  } catch(e) {
+    alert('Error al eliminar.');
+  }
 }
 
-// ── Render tabla RF8 RF9 ─────────────────────────────────────────────
-function render(){
-  const q=document.getElementById('buscar').value.toLowerCase();
-  let prods=GP().sort((a,b)=>a.nombre.localeCompare(b.nombre)); // RF8: orden alfabético
-  if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q)||p.barcode.toLowerCase().includes(q)||p.categoria.toLowerCase().includes(q));
-  if(filtroLow) prods=prods.filter(p=>p.stock<=(p.stockMin||5));
+// ── Render tabla ─────────────────────────────────────────────────────
+async function render(){
+  const q = document.getElementById('buscar').value.toLowerCase();
+  let prods = await cargarProductos();
+  prods.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q)||p.barcode.toLowerCase().includes(q)||(p.categoria||'').toLowerCase().includes(q));
+  if(filtroLow) prods=prods.filter(p=>p.stock<=(p.stock_minimo||5));
   const tbody=document.getElementById('tbody'), empty=document.getElementById('empty');
   if(!prods.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   const esAdmin = ['administrador','supervisor'].includes(ses.rol);
   tbody.innerHTML=prods.map(p=>{
-    const min=p.stockMin||5;
+    const min=p.stock_minimo||5;
     const cls=p.stock===0?'s-zero':p.stock<=min?'s-low':'s-ok';
     const lbl=p.stock===0?'Sin stock':p.stock<=min?'Stock bajo':'Normal';
     const acciones=esAdmin
-      ?`<button class="ic" onclick="abrirEdicion(${p.id})" title="Editar">✏️</button><button class="ic del" onclick="eliminar(${p.id})" title="Eliminar">🗑</button>`
+      ?`<button class="ic" onclick="abrirEdicion(${p.id},'${p.barcode}','${p.nombre}','${p.categoria}',${p.stock},'${p.unidad}',${min})" title="Editar">✏️</button><button class="ic del" onclick="eliminar(${p.id},'${p.nombre}')" title="Eliminar">🗑</button>`
       :`<span style="font-size:12px;color:#9DC4AF">Solo lectura</span>`;
     return`<tr>
       <td style="font-size:12px;color:#5C8A70;font-family:monospace">${p.barcode}</td>
@@ -421,23 +452,28 @@ function render(){
       <td>${acciones}</td>
     </tr>`;
   }).join('');
+  _cachedProds = prods;
+  stats(prods); alertas(prods);
 }
 
+let _cachedProds = [];
+
 // ── Stats ────────────────────────────────────────────────────────────
-function stats(){
-  const prods=GP();
+function stats(prods){
+  prods = prods || _cachedProds;
   const zero=prods.filter(p=>p.stock===0).length;
-  const low =prods.filter(p=>p.stock>0&&p.stock<=(p.stockMin||5)).length;
-  const ok  =prods.filter(p=>p.stock>(p.stockMin||5)).length;
+  const low =prods.filter(p=>p.stock>0&&p.stock<=(p.stock_minimo||5)).length;
+  const ok  =prods.filter(p=>p.stock>(p.stock_minimo||5)).length;
   document.getElementById('s-total').textContent=prods.length;
   document.getElementById('s-ok').textContent=ok;
   document.getElementById('s-low').textContent=low;
   document.getElementById('s-zero').textContent=zero;
 }
 
-// ── RF10: alertas stock bajo ─────────────────────────────────────────
-function alertas(){
-  const criticos=GP().filter(p=>p.stock<=(p.stockMin||5));
+// ── Alertas stock bajo ───────────────────────────────────────────────
+function alertas(prods){
+  prods = prods || _cachedProds;
+  const criticos=prods.filter(p=>p.stock<=(p.stock_minimo||5));
   const bar=document.getElementById('alert-bar');
   if(criticos.length){
     document.getElementById('alert-txt').textContent=
@@ -447,8 +483,12 @@ function alertas(){
 }
 
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
+document.getElementById('buscar').addEventListener('input', render);
 
-render(); stats(); alertas();
+// Recargar cada 30 segundos
+setInterval(render, 30000);
+
+render();
 </script>
 </body>
 </html>
